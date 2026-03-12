@@ -1,38 +1,39 @@
-package com.example.examplemod.util;
+package com.example.examplemod.farming;
 
-import com.example.examplemod.enchant.ModEnchantments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.util.RandomSource;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-public final class HarvestLogicUtil {
+public final class HarvestLogic {
     private static final int MAX_ROW_CROPS_SAFETY = 64;
     private static final float DURABILITY_DAMAGE_CHANCE = 0.30F;
 
-    private HarvestLogicUtil() {
+    private HarvestLogic() {
     }
 
     public static int harvestSingle(ServerLevel level, Player player, ItemStack tool, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        return harvestPositions(level, player, tool, List.of(pos), Map.of(pos, state));
+        CropDetection.CropInfo info = CropDetection.getMatureCrop(state);
+        if (info == null) {
+            return 0;
+        }
+        return harvestPositions(level, player, tool, List.of(pos), List.of(state));
     }
 
     public static int harvestRow(
@@ -40,29 +41,35 @@ public final class HarvestLogicUtil {
             Player player,
             ItemStack tool,
             BlockPos origin,
-            CropBlock targetCrop,
             Direction.Axis axis,
             int acreageLevel
     ) {
         List<BlockPos> positions = new ArrayList<>();
-        Map<BlockPos, BlockState> statesByPos = new LinkedHashMap<>();
-        int tierLimit = getRowLimitForHoe(tool.getItem(), acreageLevel);
-        int maxRowCrops = Math.min(tierLimit, MAX_ROW_CROPS_SAFETY);
+        List<BlockState> states = new ArrayList<>();
 
         BlockState originState = level.getBlockState(origin);
-        if (originState.getBlock() != targetCrop || !targetCrop.isMaxAge(originState)) {
+        CropDetection.CropInfo originInfo = CropDetection.getMatureCrop(originState);
+        if (originInfo == null) {
             return 0;
         }
 
-        positions.add(origin);
-        statesByPos.put(origin, originState);
-
-        scanRowDirection(level, targetCrop, origin, axis, 1, maxRowCrops, positions, statesByPos);
-        if (positions.size() < maxRowCrops) {
-            scanRowDirection(level, targetCrop, origin, axis, -1, maxRowCrops, positions, statesByPos);
+        if (!isFarmlandBelow(level, origin)) {
+            return 0;
         }
 
-        return harvestPositions(level, player, tool, positions, statesByPos);
+        int tierLimit = getRowLimitForHoe(tool.getItem(), acreageLevel);
+        int maxRowCrops = Math.min(tierLimit, MAX_ROW_CROPS_SAFETY);
+        Block originBlock = originState.getBlock();
+
+        positions.add(origin);
+        states.add(originState);
+
+        scanRowDirection(level, originBlock, origin, axis, 1, maxRowCrops, positions, states);
+        if (positions.size() < maxRowCrops) {
+            scanRowDirection(level, originBlock, origin, axis, -1, maxRowCrops, positions, states);
+        }
+
+        return harvestPositions(level, player, tool, positions, states);
     }
 
     public static int harvestAreaByAcreageLevel(ServerLevel level, Player player, ItemStack tool, BlockPos center, int acreageLevel) {
@@ -70,23 +77,23 @@ public final class HarvestLogicUtil {
         int radius = (area - 1) / 2;
 
         List<BlockPos> positions = new ArrayList<>();
-        Map<BlockPos, BlockState> statesByPos = new LinkedHashMap<>();
+        List<BlockState> states = new ArrayList<>();
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 BlockPos currentPos = center.offset(x, 0, z);
                 BlockState state = level.getBlockState(currentPos);
 
-                if (!CropDetectionUtil.isMatureCrop(state)) {
+                if (CropDetection.getMatureCrop(state) == null) {
                     continue;
                 }
 
                 positions.add(currentPos);
-                statesByPos.put(currentPos, state);
+                states.add(state);
             }
         }
 
-        return harvestPositions(level, player, tool, positions, statesByPos);
+        return harvestPositions(level, player, tool, positions, states);
     }
 
     public static int rollDurabilityDamage(RandomSource random, int harvestedCrops) {
@@ -101,13 +108,13 @@ public final class HarvestLogicUtil {
 
     private static void scanRowDirection(
             ServerLevel level,
-            CropBlock targetCrop,
+            Block targetBlock,
             BlockPos origin,
             Direction.Axis axis,
             int direction,
             int maxRowCrops,
             List<BlockPos> positions,
-            Map<BlockPos, BlockState> statesByPos
+            List<BlockState> states
     ) {
         for (int step = 1; step < maxRowCrops && positions.size() < maxRowCrops; step++) {
             int xOffset = axis == Direction.Axis.X ? step * direction : 0;
@@ -115,12 +122,18 @@ public final class HarvestLogicUtil {
             BlockPos currentPos = origin.offset(xOffset, 0, zOffset);
             BlockState currentState = level.getBlockState(currentPos);
 
-            if (currentState.getBlock() != targetCrop || !targetCrop.isMaxAge(currentState)) {
+            if (currentState.getBlock() != targetBlock) {
+                break;
+            }
+            if (CropDetection.getMatureCrop(currentState) == null) {
+                break;
+            }
+            if (!isFarmlandBelow(level, currentPos)) {
                 break;
             }
 
             positions.add(currentPos);
-            statesByPos.put(currentPos, currentState);
+            states.add(currentState);
         }
     }
 
@@ -129,31 +142,29 @@ public final class HarvestLogicUtil {
             Player player,
             ItemStack tool,
             List<BlockPos> positions,
-            Map<BlockPos, BlockState> statesByPos
+            List<BlockState> states
     ) {
         if (positions.isEmpty()) {
             return 0;
         }
 
-        int bountifulLevel = EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.BOUNTIFUL_SEED.get(), tool);
-
+        int bountifulLevel = EnchantmentEffects.getBountifulLevel(tool);
         int harvested = 0;
-        for (BlockPos pos : positions) {
-            BlockState state = statesByPos.get(pos);
-            if (state == null) {
-                state = level.getBlockState(pos);
-            }
 
-            if (!(state.getBlock() instanceof CropBlock cropBlock) || !cropBlock.isMaxAge(state)) {
+        for (int i = 0; i < positions.size(); i++) {
+            BlockPos pos = positions.get(i);
+            BlockState state = states.get(i);
+            CropDetection.CropInfo info = CropDetection.getMatureCrop(state);
+            if (info == null) {
                 continue;
             }
 
-            harvestAndReplant(level, player, tool, pos, state, cropBlock, bountifulLevel);
+            harvestAndReplant(level, player, tool, pos, state, info, bountifulLevel);
             harvested++;
         }
 
         if (harvested > 1) {
-            playMultiHarvestFeedback(level, player, positions, statesByPos);
+            playMultiHarvestFeedback(level, player, positions, states);
         }
 
         return harvested;
@@ -165,20 +176,21 @@ public final class HarvestLogicUtil {
             ItemStack tool,
             BlockPos pos,
             BlockState state,
-            CropBlock cropBlock,
+            CropDetection.CropInfo info,
             int bountifulLevel
     ) {
-        ItemStack replantSeed = cropBlock.getCloneItemStack(level, pos, state);
+        ItemStack replantSeed = state.getBlock().getCloneItemStack(level, pos, state);
         List<ItemStack> drops = Block.getDrops(state, level, pos, level.getBlockEntity(pos), player, tool);
 
-        boolean keepSeedForFree = shouldKeepSeedForFree(level.random, bountifulLevel);
-        if (!replantSeed.isEmpty() && !keepSeedForFree) {
+        if (!replantSeed.isEmpty()) {
             consumeOneMatchingSeed(drops, replantSeed);
         }
-        applyBountifulCropBonus(level.random, drops, replantSeed, bountifulLevel);
+        EnchantmentEffects.applyBountifulSeedBonus(level.random, drops, bountifulLevel);
 
-        BlockState replantedState = cropBlock.getStateForAge(0);
+        BlockState replantedState = CropDetection.getReplantState(state, info);
         level.setBlock(pos, replantedState, Block.UPDATE_ALL);
+
+        SoilFatigueManager.get(level).applyOnReplant(level, pos.below(), BuiltInRegistries.BLOCK.getKey(state.getBlock()));
 
         for (ItemStack drop : drops) {
             if (!drop.isEmpty()) {
@@ -204,10 +216,11 @@ public final class HarvestLogicUtil {
             ServerLevel level,
             Player player,
             List<BlockPos> positions,
-            Map<BlockPos, BlockState> statesByPos
+            List<BlockState> states
     ) {
-        for (BlockPos pos : positions) {
-            BlockState state = statesByPos.getOrDefault(pos, level.getBlockState(pos));
+        for (int i = 0; i < positions.size(); i++) {
+            BlockPos pos = positions.get(i);
+            BlockState state = states.get(i);
             level.sendParticles(
                     new BlockParticleOption(ParticleTypes.BLOCK, state),
                     pos.getX() + 0.5D,
@@ -230,6 +243,10 @@ public final class HarvestLogicUtil {
         }
 
         player.sweepAttack();
+    }
+
+    private static boolean isFarmlandBelow(ServerLevel level, BlockPos pos) {
+        return level.getBlockState(pos.below()).is(Blocks.FARMLAND);
     }
 
     private static int getAreaSizeForAcreageLevel(int acreageLevel) {
@@ -274,56 +291,5 @@ public final class HarvestLogicUtil {
             return level2Value;
         }
         return level1Value;
-    }
-
-    private static boolean shouldKeepSeedForFree(RandomSource random, int bountifulLevel) {
-        if (bountifulLevel <= 0) {
-            return false;
-        }
-
-        float chance = switch (Math.min(bountifulLevel, 3)) {
-            case 1 -> 0.15F;
-            case 2 -> 0.25F;
-            default -> 0.40F;
-        };
-        return random.nextFloat() < chance;
-    }
-
-    private static void applyBountifulCropBonus(RandomSource random, List<ItemStack> drops, ItemStack seedTemplate, int bountifulLevel) {
-        if (bountifulLevel <= 0 || drops.isEmpty()) {
-            return;
-        }
-
-        boolean hasNonSeedDrop = false;
-        for (ItemStack drop : drops) {
-            if (drop.isEmpty() || seedTemplate.isEmpty()) {
-                continue;
-            }
-            if (!ItemStack.isSameItemSameTags(drop, seedTemplate)) {
-                hasNonSeedDrop = true;
-                break;
-            }
-        }
-
-        for (ItemStack drop : drops) {
-            if (drop.isEmpty()) {
-                continue;
-            }
-
-            boolean isSeedItem = !seedTemplate.isEmpty() && ItemStack.isSameItemSameTags(drop, seedTemplate);
-            if (isSeedItem && hasNonSeedDrop) {
-                continue;
-            }
-
-            int extra = rollFortuneLikeBonus(random, bountifulLevel);
-            if (extra > 0) {
-                drop.grow(extra);
-            }
-        }
-    }
-
-    private static int rollFortuneLikeBonus(RandomSource random, int level) {
-        int roll = random.nextInt(level + 2) - 1;
-        return Math.max(roll, 0);
     }
 }
