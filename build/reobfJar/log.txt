@@ -122,14 +122,14 @@ Adding Libraries to Inheritance
 Reading Input: /home/eduh/Documentos/Mods/Eduhzzepunk￢ﾀﾙs Productive Hoe/build/libs/eduhzzepunks_productive_hoe-1.0.0.jar
 Adding input to inheritance map
 Processing entries
-Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMinCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMinCost(I)I: getMinCost -> m_6183_
-Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMaxLevel()I from net/minecraft/world/item/enchantment/Enchantment/getMaxLevel()I: getMaxLevel -> m_6586_
-Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z from net/minecraft/world/item/enchantment/Enchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z: canEnchant -> m_6081_
-Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMaxCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMaxCost(I)I: getMaxCost -> m_6175_
 Conflicting propagated mapping for com/example/examplemod/enchant/AcreageEnchantment/getMinCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMinCost(I)I: getMinCost -> m_6183_
 Conflicting propagated mapping for com/example/examplemod/enchant/AcreageEnchantment/getMaxLevel()I from net/minecraft/world/item/enchantment/Enchantment/getMaxLevel()I: getMaxLevel -> m_6586_
 Conflicting propagated mapping for com/example/examplemod/enchant/AcreageEnchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z from net/minecraft/world/item/enchantment/Enchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z: canEnchant -> m_6081_
+Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMinCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMinCost(I)I: getMinCost -> m_6183_
 Conflicting propagated mapping for com/example/examplemod/enchant/AcreageEnchantment/getMaxCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMaxCost(I)I: getMaxCost -> m_6175_
+Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMaxLevel()I from net/minecraft/world/item/enchantment/Enchantment/getMaxLevel()I: getMaxLevel -> m_6586_
+Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z from net/minecraft/world/item/enchantment/Enchantment/canEnchant(Lnet/minecraft/world/item/ItemStack;)Z: canEnchant -> m_6081_
+Conflicting propagated mapping for com/example/examplemod/enchant/BountifulSeedEnchantment/getMaxCost(I)I from net/minecraft/world/item/enchantment/Enchantment/getMaxCost(I)I: getMaxCost -> m_6175_
 Conflicting propagated mapping for net/minecraft/world/entity/LivingEntity/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V from net/minecraft/world/entity/player/Player/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V: lambda$addAdditionalSaveData$3 -> m_219754_
 Adding extras
 Sorting
