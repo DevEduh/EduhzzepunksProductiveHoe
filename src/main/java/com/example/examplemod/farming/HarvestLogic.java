@@ -190,7 +190,11 @@ public final class HarvestLogic {
         BlockState replantedState = CropDetection.getReplantState(state, info);
         level.setBlock(pos, replantedState, Block.UPDATE_ALL);
 
-        SoilFatigueManager.get(level).applyOnReplant(level, pos.below(), BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+        SoilFatigueManager.get(level).applyOnReplant(
+                level,
+                pos.below(),
+                BuiltInRegistries.BLOCK.getKey(replantedState.getBlock())
+        );
 
         for (ItemStack drop : drops) {
             if (!drop.isEmpty()) {

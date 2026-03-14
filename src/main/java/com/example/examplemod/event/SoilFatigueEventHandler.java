@@ -4,10 +4,11 @@ import com.example.examplemod.ProductiveHoeMod;
 import com.example.examplemod.farming.CropDetection;
 import com.example.examplemod.farming.SoilFatigueManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.BonemealEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -43,7 +44,6 @@ public final class SoilFatigueEventHandler {
             return;
         }
 
-        manager.maybeRecover(level, farmlandPos);
     }
 
     @SubscribeEvent
@@ -52,22 +52,50 @@ public final class SoilFatigueEventHandler {
             return;
         }
 
-        if (!event.getBlock().is(Blocks.FARMLAND)) {
+        BlockPos pos = event.getPos();
+        BlockState state = level.getBlockState(pos);
+        if (!state.is(Blocks.FARMLAND)) {
             return;
         }
 
-        SoilFatigueManager.get(level).resetFatigue(event.getPos());
+        if (CropDetection.isCrop(level.getBlockState(pos.above()))) {
+            return;
+        }
+
+        SoilFatigueManager.get(level).resetFatigue(pos);
     }
 
     @SubscribeEvent
-    public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        if (!(event.level instanceof ServerLevel level)) {
+    public static void onCropPlaced(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
-        SoilFatigueManager.get(level).tickRecovery(level);
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+
+        BlockPos pos = event.getPos();
+        BlockState state = event.getPlacedBlock();
+        CropDetection.CropInfo info = CropDetection.getCropInfo(state);
+        if (info == null) {
+            return;
+        }
+
+        int age = state.getValue(info.ageProperty());
+        if (age != 0) {
+            return;
+        }
+
+        BlockPos farmlandPos = pos.below();
+        if (!level.getBlockState(farmlandPos).is(Blocks.FARMLAND)) {
+            return;
+        }
+
+        SoilFatigueManager.get(level).applyOnReplant(
+                level,
+                farmlandPos,
+                BuiltInRegistries.BLOCK.getKey(state.getBlock())
+        );
     }
 }

@@ -32,8 +32,8 @@ public final class SoilFatigueClientOverlay {
 
     static {
         FATIGUE_CACHE.defaultReturnValue(-1);
-        LAST_REQUEST_TICK.defaultReturnValue(Long.MIN_VALUE);
-        LAST_UPDATE_TICK.defaultReturnValue(Long.MIN_VALUE);
+        LAST_REQUEST_TICK.defaultReturnValue(-1L);
+        LAST_UPDATE_TICK.defaultReturnValue(-1L);
     }
 
     private SoilFatigueClientOverlay() {
@@ -59,13 +59,13 @@ public final class SoilFatigueClientOverlay {
         long gameTime = minecraft.level.getGameTime();
 
         long lastRequest = LAST_REQUEST_TICK.get(key);
-        if (gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS) {
+        if (lastRequest < 0L || gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS) {
             LAST_REQUEST_TICK.put(key, gameTime);
             ModNetworking.sendToServer(new SoilFatigueRequest(pos));
         }
 
         long lastUpdate = LAST_UPDATE_TICK.get(key);
-        if (gameTime - lastUpdate > STALE_TICKS) {
+        if (lastUpdate < 0L || gameTime - lastUpdate > STALE_TICKS) {
             return -1;
         }
 

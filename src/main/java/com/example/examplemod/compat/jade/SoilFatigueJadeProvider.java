@@ -2,8 +2,12 @@ package com.example.examplemod.compat.jade;
 
 import com.example.examplemod.ProductiveHoeMod;
 import com.example.examplemod.client.SoilFatigueClientOverlay;
+import com.example.examplemod.farming.CropDetection;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
@@ -21,7 +25,16 @@ public enum SoilFatigueJadeProvider implements IBlockComponentProvider {
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-        int fatigue = SoilFatigueClientOverlay.getCachedFatigue(accessor.getPosition());
+        if (!config.get(UID)) {
+            return;
+        }
+
+        BlockPos farmlandPos = resolveFarmlandPos(accessor);
+        if (farmlandPos == null) {
+            return;
+        }
+
+        int fatigue = SoilFatigueClientOverlay.getCachedFatigue(farmlandPos);
         if (fatigue < 0) {
             return;
         }
@@ -31,5 +44,25 @@ public enum SoilFatigueJadeProvider implements IBlockComponentProvider {
 
         tooltip.add(Component.translatable("tooltip.eduhzzepunks_productive_hoe.soil_fatigue", fatigue, fatiguePercent));
         tooltip.add(Component.translatable("tooltip.eduhzzepunks_productive_hoe.soil_growth_blocked", blockedPercent));
+    }
+
+    private static BlockPos resolveFarmlandPos(BlockAccessor accessor) {
+        BlockState state = accessor.getBlockState();
+        BlockPos pos = accessor.getPosition();
+
+        if (state.is(Blocks.FARMLAND)) {
+            return pos;
+        }
+
+        if (!CropDetection.isCrop(state)) {
+            return null;
+        }
+
+        BlockPos farmlandPos = pos.below();
+        if (accessor.getLevel().getBlockState(farmlandPos).is(Blocks.FARMLAND)) {
+            return farmlandPos;
+        }
+
+        return null;
     }
 }
