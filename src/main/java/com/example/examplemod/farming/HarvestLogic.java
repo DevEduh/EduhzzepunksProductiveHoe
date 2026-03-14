@@ -182,10 +182,10 @@ public final class HarvestLogic {
         ItemStack replantSeed = state.getBlock().getCloneItemStack(level, pos, state);
         List<ItemStack> drops = Block.getDrops(state, level, pos, level.getBlockEntity(pos), player, tool);
 
-        if (!replantSeed.isEmpty()) {
+        if (!replantSeed.isEmpty() && EnchantmentEffects.shouldConsumeSeed(level.random, bountifulLevel)) {
             consumeOneMatchingSeed(drops, replantSeed);
         }
-        EnchantmentEffects.applyBountifulSeedBonus(level.random, drops, bountifulLevel);
+        EnchantmentEffects.applyBountifulSeedBonus(level.random, drops, bountifulLevel, replantSeed);
 
         BlockState replantedState = CropDetection.getReplantState(state, info);
         level.setBlock(pos, replantedState, Block.UPDATE_ALL);

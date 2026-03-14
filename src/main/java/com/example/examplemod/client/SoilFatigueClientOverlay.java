@@ -49,6 +49,29 @@ public final class SoilFatigueClientOverlay {
         LAST_UPDATE_TICK.put(key, time);
     }
 
+    public static int getCachedFatigue(BlockPos pos) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return -1;
+        }
+
+        long key = pos.asLong();
+        long gameTime = minecraft.level.getGameTime();
+
+        long lastRequest = LAST_REQUEST_TICK.get(key);
+        if (gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS) {
+            LAST_REQUEST_TICK.put(key, gameTime);
+            ModNetworking.sendToServer(new SoilFatigueRequest(pos));
+        }
+
+        long lastUpdate = LAST_UPDATE_TICK.get(key);
+        if (gameTime - lastUpdate > STALE_TICKS) {
+            return -1;
+        }
+
+        return FATIGUE_CACHE.get(key);
+    }
+
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Post event) {
         if (event.getOverlay() != VanillaGuiOverlay.CROSSHAIR.type()) {
@@ -70,26 +93,13 @@ public final class SoilFatigueClientOverlay {
             return;
         }
 
-        long key = pos.asLong();
-        long gameTime = minecraft.level.getGameTime();
-
-        long lastRequest = LAST_REQUEST_TICK.get(key);
-        if (gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS) {
-            LAST_REQUEST_TICK.put(key, gameTime);
-            ModNetworking.sendToServer(new SoilFatigueRequest(pos));
-        }
-
-        long lastUpdate = LAST_UPDATE_TICK.get(key);
-        if (gameTime - lastUpdate > STALE_TICKS) {
-            return;
-        }
-
-        int fatigue = FATIGUE_CACHE.get(key);
+        int fatigue = getCachedFatigue(pos);
         if (fatigue < 0) {
             return;
         }
 
-        int quality = Math.max(0, 100 - (fatigue * 20));
+        float penalty = Math.min(0.2F * fatigue, 0.95F);
+        int quality = Math.round((1.0F - penalty) * 100.0F);
         List<Component> lines = List.of(
                 Component.literal("Soil Fatigue: " + fatigue + " / 5"),
                 Component.literal("Soil Quality: " + quality + "%")

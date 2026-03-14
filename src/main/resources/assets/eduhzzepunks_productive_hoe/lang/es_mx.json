@@ -1,4 +1,7 @@
 {
   "enchantment.eduhzzepunks_productive_hoe.acreage": "Acreaje",
-  "enchantment.eduhzzepunks_productive_hoe.bountiful_seed": "Semilla Pródiga"
+  "enchantment.eduhzzepunks_productive_hoe.bountiful_seed": "Semilla Pródiga",
+  "config.jade.plugin_eduhzzepunks_productive_hoe.soil_fatigue": "Fatiga del suelo",
+  "tooltip.eduhzzepunks_productive_hoe.soil_fatigue": "Fatiga del suelo: %d / 5 (%d%%)",
+  "tooltip.eduhzzepunks_productive_hoe.soil_growth_blocked": "Crecimiento bloqueado: %d%%"
 }

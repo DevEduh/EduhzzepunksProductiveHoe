@@ -23,7 +23,7 @@ public class JEIIntegration implements IModPlugin {
                 Blocks.FARMLAND,
                 Component.literal("Soil Fatigue is shown when you look at tilled farmland."),
                 Component.literal("Soil Fatigue: 0 / 5 = 100% quality."),
-                Component.literal("Soil Fatigue: 5 / 5 = 0% quality.")
+                Component.literal("Soil Fatigue: 5 / 5 = 5% quality.")
         );
     }
 }

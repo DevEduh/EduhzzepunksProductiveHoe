@@ -1,9 +1,7 @@
 package com.example.examplemod;
 
 import com.example.examplemod.enchant.ModEnchantments;
-import com.example.examplemod.event.FarmingEventHandler;
 import com.example.examplemod.network.ModNetworking;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -16,6 +14,5 @@ public class ProductiveHoeMod {
         IEventBus modEventBus = context.getModEventBus();
         ModEnchantments.register(modEventBus);
         ModNetworking.register();
-        MinecraftForge.EVENT_BUS.register(FarmingEventHandler.class);
     }
 }

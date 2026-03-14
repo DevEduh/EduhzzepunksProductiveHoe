@@ -1,4 +1,7 @@
 {
   "enchantment.eduhzzepunks_productive_hoe.acreage": "Acreage",
-  "enchantment.eduhzzepunks_productive_hoe.bountiful_seed": "Bountiful Seed"
+  "enchantment.eduhzzepunks_productive_hoe.bountiful_seed": "Bountiful Seed",
+  "config.jade.plugin_eduhzzepunks_productive_hoe.soil_fatigue": "Soil Fatigue",
+  "tooltip.eduhzzepunks_productive_hoe.soil_fatigue": "Soil Fatigue: %d / 5 (%d%%)",
+  "tooltip.eduhzzepunks_productive_hoe.soil_growth_blocked": "Growth Blocked: %d%%"
 }

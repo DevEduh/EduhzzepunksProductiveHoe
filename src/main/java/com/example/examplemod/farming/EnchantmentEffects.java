@@ -19,13 +19,43 @@ public final class EnchantmentEffects {
         return EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.BOUNTIFUL_SEED.get(), tool);
     }
 
-    public static void applyBountifulSeedBonus(RandomSource random, List<ItemStack> drops, int level) {
+    public static boolean shouldConsumeSeed(RandomSource random, int level) {
+        if (level <= 0) {
+            return true;
+        }
+
+        float noConsumeChance = switch (level) {
+            case 1 -> 0.15F;
+            case 2 -> 0.25F;
+            default -> 0.40F;
+        };
+        return random.nextFloat() >= noConsumeChance;
+    }
+
+    public static void applyBountifulSeedBonus(RandomSource random, List<ItemStack> drops, int level, ItemStack seedTemplate) {
         if (level <= 0 || drops.isEmpty()) {
             return;
         }
 
+        boolean hasNonSeed = false;
+        if (!seedTemplate.isEmpty()) {
+            for (ItemStack drop : drops) {
+                if (drop.isEmpty()) {
+                    continue;
+                }
+                if (!ItemStack.isSameItemSameTags(drop, seedTemplate)) {
+                    hasNonSeed = true;
+                    break;
+                }
+            }
+        }
+
         for (ItemStack drop : drops) {
             if (drop.isEmpty()) {
+                continue;
+            }
+            boolean isSeed = !seedTemplate.isEmpty() && ItemStack.isSameItemSameTags(drop, seedTemplate);
+            if (isSeed && hasNonSeed) {
                 continue;
             }
             int extra = rollFortuneLikeBonus(random, level);
@@ -39,6 +69,7 @@ public final class EnchantmentEffects {
         if (level <= 0) {
             return 0;
         }
-        return random.nextInt(level + 1);
+        int roll = random.nextInt(level + 2) - 1;
+        return Math.max(0, roll);
     }
 }

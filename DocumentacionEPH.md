@@ -60,7 +60,7 @@ Probabilidad por cultivo cosechado:
 Aplica tambien a cultivos donde semilla y producto son el mismo item (zanahoria/papa).
 
 #### Efecto B: bonus estilo fortuna para cultivos
-- Aplica bonus tipo fortuna al drop de cultivo.
+- Aplica un bonus con la **misma probabilidad** que Fortuna en minerales.
 - Excluye semillas cuando son item separado.
 - En cultivos de item unico (zanahoria/papa), el bonus se aplica al rendimiento util.
 
