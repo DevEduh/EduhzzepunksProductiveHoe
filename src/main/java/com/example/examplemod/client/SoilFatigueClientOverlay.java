@@ -59,14 +59,16 @@ public final class SoilFatigueClientOverlay {
         long key = pos.asLong();
         long gameTime = minecraft.level.getGameTime();
 
+        long lastUpdate = LAST_UPDATE_TICK.get(key);
+        boolean stale = lastUpdate < 0L || gameTime - lastUpdate > STALE_TICKS;
+
         long lastRequest = LAST_REQUEST_TICK.get(key);
-        if (lastRequest < 0L || gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS) {
+        if (stale && (lastRequest < 0L || gameTime - lastRequest >= REQUEST_COOLDOWN_TICKS)) {
             LAST_REQUEST_TICK.put(key, gameTime);
             ModNetworking.sendToServer(new SoilFatigueRequest(pos));
         }
 
-        long lastUpdate = LAST_UPDATE_TICK.get(key);
-        if (lastUpdate < 0L || gameTime - lastUpdate > STALE_TICKS) {
+        if (stale) {
             return -1;
         }
 

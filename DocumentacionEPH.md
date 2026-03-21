@@ -197,6 +197,7 @@ Jardines:
 
 Notas:
 - Los jardines son mas pequenos y las cabanas tienen techo y decoracion mejorados.
+- Los jardines incluyen barril con loot y composter como detalle decorativo.
 - Los archivos `abandoned_garden.nbt` y `abandoned_garden_1.nbt` quedan como legacy si se quieren reactivar.
 
 ## 7) Loot
