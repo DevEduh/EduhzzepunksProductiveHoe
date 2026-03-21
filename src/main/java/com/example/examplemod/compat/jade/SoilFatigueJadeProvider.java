@@ -3,6 +3,7 @@ package com.example.examplemod.compat.jade;
 import com.example.examplemod.ProductiveHoeMod;
 import com.example.examplemod.client.SoilFatigueClientOverlay;
 import com.example.examplemod.farming.CropDetection;
+import com.example.examplemod.farming.SoilFatigueManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -38,9 +39,8 @@ public enum SoilFatigueJadeProvider implements IBlockComponentProvider {
         if (fatigue < 0) {
             return;
         }
-        int fatiguePercent = Math.max(0, Math.min(100, fatigue * 20));
-        float penalty = Math.min(0.2F * fatigue, 0.95F);
-        int blockedPercent = Math.round(penalty * 100.0F);
+        int fatiguePercent = SoilFatigueManager.getFatiguePercent(fatigue);
+        int blockedPercent = SoilFatigueManager.getBlockedPercent(fatigue);
 
         tooltip.add(Component.translatable("tooltip.eduhzzepunks_productive_hoe.soil_fatigue", fatigue, fatiguePercent));
         tooltip.add(Component.translatable("tooltip.eduhzzepunks_productive_hoe.soil_growth_blocked", blockedPercent));

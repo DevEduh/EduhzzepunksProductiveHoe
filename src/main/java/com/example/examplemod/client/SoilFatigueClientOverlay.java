@@ -1,6 +1,7 @@
 package com.example.examplemod.client;
 
 import com.example.examplemod.ProductiveHoeMod;
+import com.example.examplemod.farming.SoilFatigueManager;
 import com.example.examplemod.network.ModNetworking;
 import com.example.examplemod.network.SoilFatigueRequest;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
@@ -98,8 +99,7 @@ public final class SoilFatigueClientOverlay {
             return;
         }
 
-        float penalty = Math.min(0.2F * fatigue, 0.95F);
-        int quality = Math.round((1.0F - penalty) * 100.0F);
+        int quality = SoilFatigueManager.getQualityPercent(fatigue);
         List<Component> lines = List.of(
                 Component.literal("Soil Fatigue: " + fatigue + " / 5"),
                 Component.literal("Soil Quality: " + quality + "%")

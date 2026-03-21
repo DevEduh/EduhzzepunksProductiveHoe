@@ -2,6 +2,7 @@ package com.example.examplemod.event;
 
 import com.example.examplemod.ProductiveHoeMod;
 import com.example.examplemod.farming.CropDetection;
+import com.example.examplemod.farming.SoilFatigueEffects;
 import com.example.examplemod.farming.SoilFatigueManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -39,6 +40,9 @@ public final class SoilFatigueEventHandler {
 
         SoilFatigueManager manager = SoilFatigueManager.get(level);
         int fatigue = manager.getFatigue(farmlandPos);
+        if (fatigue <= 0) {
+            return;
+        }
         if (manager.shouldBlockGrowth(level, farmlandPos, fatigue)) {
             event.setResult(Event.Result.DENY);
             return;
@@ -62,7 +66,14 @@ public final class SoilFatigueEventHandler {
             return;
         }
 
-        SoilFatigueManager.get(level).resetFatigue(pos);
+        SoilFatigueManager manager = SoilFatigueManager.get(level);
+        int fatigue = manager.getFatigue(pos);
+        if (fatigue <= 0) {
+            return;
+        }
+
+        manager.resetFatigue(pos);
+        SoilFatigueEffects.spawnRecoveryParticles(level, pos, 3);
     }
 
     @SubscribeEvent
@@ -92,10 +103,35 @@ public final class SoilFatigueEventHandler {
             return;
         }
 
-        SoilFatigueManager.get(level).applyOnReplant(
+        int fatigueDelta = SoilFatigueManager.get(level).applyOnReplant(
                 level,
                 farmlandPos,
                 BuiltInRegistries.BLOCK.getKey(state.getBlock())
         );
+        if (fatigueDelta < 0) {
+            SoilFatigueEffects.spawnRecoveryParticles(level, farmlandPos, 2);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFarmlandBroken(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+
+        if (!event.getState().is(Blocks.FARMLAND)) {
+            return;
+        }
+
+        SoilFatigueManager.get(level).clear(event.getPos());
+    }
+
+    @SubscribeEvent
+    public static void onFarmlandTrampled(BlockEvent.FarmlandTrampleEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+
+        SoilFatigueManager.get(level).clear(event.getPos());
     }
 }
